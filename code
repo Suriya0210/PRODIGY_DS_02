@@ -1,0 +1,114 @@
+# =============================================================================
+# Data Cleaning & EDA on Toyota Used Car Dataset
+# =============================================================================
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# Style
+sns.set(style="whitegrid", palette="Set2")
+plt.rcParams["figure.figsize"] = (8,5)
+
+# =============================================================================
+# Load dataset
+# =============================================================================
+df = pd.read_csv(
+    "C:\\Users\\SURIYA\\Downloads\\Toyota.csv",
+    index_col=0,
+    na_values=["??", "????"]
+)
+
+# Backup copy
+toyota = df.copy()
+
+# =============================================================================
+# Data Cleaning
+# =============================================================================
+# Fill missing values
+for col in toyota.columns:
+    if toyota[col].dtype in ["float64", "int64"]:
+        toyota[col].fillna(toyota[col].median(), inplace=True)
+    else:
+        toyota[col].fillna(toyota[col].mode()[0], inplace=True)
+
+# =============================================================================
+# Dataset Summary
+# =============================================================================
+print("\n--- Structure of Data ---")
+print(toyota.info())
+
+print("\n--- Missing Values ---")
+print(toyota.isnull().sum())
+
+print("\n--- Statistical Summary ---")
+print(toyota.describe().T)
+
+# =============================================================================
+# Frequency & Probability Tables
+# =============================================================================
+print("\n--- FuelType Frequency ---")
+print(pd.crosstab(toyota["FuelType"], "count"))
+
+print("\n--- FuelType vs Automatic ---")
+print(pd.crosstab(toyota["Automatic"], toyota["FuelType"], margins=True))
+
+print("\n--- Joint Probability ---")
+print(pd.crosstab(toyota["Automatic"], toyota["FuelType"], normalize=True))
+
+print("\n--- Conditional Probability (Row-wise) ---")
+print(pd.crosstab(toyota["Automatic"], toyota["FuelType"], normalize="index"))
+
+# =============================================================================
+# Correlation Heatmap
+# =============================================================================
+plt.figure(figsize=(10,6))
+sns.heatmap(toyota.corr(numeric_only=True), annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("Correlation Heatmap")
+plt.show()
+
+# =============================================================================
+# Visualizations
+# =============================================================================
+
+# Price vs Age (Scatter)
+sns.scatterplot(x="Age", y="Price", data=toyota, color="red", alpha=0.6)
+plt.title("Price vs Age of Cars")
+plt.show()
+
+# Histogram for KM
+sns.histplot(toyota["KM"], bins=5, color="green", edgecolor="white")
+plt.title("Distribution of Kilometers Driven")
+plt.xlabel("Kilometers")
+plt.ylabel("Frequency")
+plt.show()
+
+# Bar plot - FuelType
+sns.countplot(x="FuelType", data=toyota, palette="Set1")
+plt.title("Distribution of Fuel Types")
+plt.show()
+
+# Grouped bar plot - FuelType vs Metallic Color
+sns.countplot(x="FuelType", hue="MetColor", data=toyota, palette="husl")
+plt.title("Fuel Type vs Metallic Color")
+plt.show()
+
+# Pairplot
+sns.pairplot(toyota, hue="FuelType", diag_kind="kde", plot_kws={"alpha":0.5})
+plt.show()
+
+# 3D Scatter: Age, KM, Price
+if {"Age","KM","Price"}.issubset(toyota.columns):
+    fig = plt.figure(figsize=(8,6))
+    ax = fig.add_subplot(111, projection="3d")
+    ax.scatter(toyota["Age"], toyota["KM"], toyota["Price"], 
+               c=toyota["Price"], cmap="viridis", s=50, alpha=0.6)
+    ax.set_xlabel("Age (months)")
+    ax.set_ylabel("Kilometers")
+    ax.set_zlabel("Price (Euros)")
+    plt.title("3D Scatter: Age vs KM vs Price")
+    plt.show()
+
+
